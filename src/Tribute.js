@@ -20,6 +20,7 @@ class Tribute {
         requireLeadingSpace = true,
         allowSpaces = false,
         replaceTextSuffix = null,
+        positionMenu = true,
     }) {
 
         this.menuSelected = 0
@@ -29,6 +30,7 @@ class Tribute {
         this.menuContainer = menuContainer
         this.allowSpaces = allowSpaces
         this.replaceTextSuffix = replaceTextSuffix
+        this.positionMenu = positionMenu
 
         if (values) {
             this.collection = [{
@@ -51,7 +53,7 @@ class Tribute {
                         return t.bind(this)
                     }
 
-                    return function () {return '<li>No match!</li>'}.bind(this)
+                    return function () {return '<li class="no-match">No match!</li>'}.bind(this)
                 })(noMatchTemplate),
 
                 // column to search against in the object
@@ -100,6 +102,7 @@ class Tribute {
     }
 
     static defaultSelectTemplate(item) {
+      if (typeof item === 'undefined') return null;
       if (this.range.isContentEditable(this.current.element)) {
           return '<span class="tribute-mention">' + (this.current.collection.trigger + item.original[this.current.collection.fillAttr]) + '</span>';
       }
@@ -221,6 +224,8 @@ class Tribute {
 
             let ul = this.menu.querySelector('ul')
 
+            this.range.positionMenuAtCaret(scrollTo)
+
             if (!items.length) {
                 let noMatchEvent = new CustomEvent('tribute-no-match', { detail: this.menu })
                 this.current.element.dispatchEvent(noMatchEvent)
@@ -249,8 +254,6 @@ class Tribute {
                 li.innerHTML = this.current.collection.menuItemTemplate(item)
                 ul.appendChild(li)
             })
-
-            this.range.positionMenuAtCaret(scrollTo)
         }
 
         if (typeof this.current.collection.values === 'function') {
@@ -266,9 +269,14 @@ class Tribute {
         }
 
         this.current.collection = this.collection[collectionIndex || 0]
+        this.current.externalTrigger = true
         this.current.element = element
 
-        this.insertTextAtCursor(this.current.collection.trigger)
+        if (element.isContentEditable)
+            this.insertTextAtCursor(this.current.collection.trigger)
+        else
+            this.insertAtCaret(element, this.current.collection.trigger)
+
         this.showMenuFor(element)
     }
 
@@ -307,17 +315,17 @@ class Tribute {
 
     // for regular inputs
     insertAtCaret(textarea, text) {
-        var scrollPos = txtarea.scrollTop;
-        var caretPos = txtarea.selectionStart;
+        var scrollPos = textarea.scrollTop;
+        var caretPos = textarea.selectionStart;
 
-        var front = (txtarea.value).substring(0, caretPos);
-        var back = (txtarea.value).substring(txtarea.selectionEnd, txtarea.value.length);
-        txtarea.value = front + text + back;
+        var front = (textarea.value).substring(0, caretPos);
+        var back = (textarea.value).substring(textarea.selectionEnd, textarea.value.length);
+        textarea.value = front + text + back;
         caretPos = caretPos + text.length;
-        txtarea.selectionStart = caretPos;
-        txtarea.selectionEnd = caretPos;
-        txtarea.focus();
-        txtarea.scrollTop = scrollPos;
+        textarea.selectionStart = caretPos;
+        textarea.selectionEnd = caretPos;
+        textarea.focus();
+        textarea.scrollTop = scrollPos;
     }
 
     hideMenu() {
@@ -334,7 +342,7 @@ class Tribute {
         if (typeof index !== 'number') return
         let item = this.current.filteredItems[index]
         let content = this.current.collection.selectTemplate(item)
-        this.replaceText(content, originalEvent, item)
+        if (content !== null) this.replaceText(content, originalEvent, item)
     }
 
     replaceText(content, originalEvent, item) {

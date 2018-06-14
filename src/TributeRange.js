@@ -25,6 +25,12 @@ class TributeRange {
         let info = this.getTriggerInfo(false, false, true, this.tribute.allowSpaces)
 
         if (typeof info !== 'undefined') {
+
+            if(!this.tribute.positionMenu){
+                this.tribute.menu.style.cssText = `display: block;`
+                return
+            }
+
             if (!this.isContentEditable(context.element)) {
                 coordinates = this.getTextAreaOrInputUnderlinePosition(this.getDocument().activeElement,
                     info.mentionPosition)
@@ -33,15 +39,35 @@ class TributeRange {
                 coordinates = this.getContentEditableCaretPosition(info.mentionPosition)
             }
 
-            setTimeout(() => {
-                this.tribute.menu.style.cssText = `top: ${coordinates.top}px;
-                                         left: ${coordinates.left}px;
-                                         position: absolute;
-                                         zIndex: 10000;
-                                         display: block;`
+            // TODO: flip the dropdown if rendered off of screen edge.
+            // let contentWidth = this.tribute.menu.offsetWidth + coordinates.left
+            // let parentWidth;
 
-                if (scrollTo) this.scrollIntoView()
-            }, 0)
+            // if (this.tribute.menuContainer) {
+            //     parentWidth = this.tribute.menuContainer.offsetWidth
+            // } else {
+            //     parentWidth = this.getDocument().body.offsetWidth
+            // }
+
+            // if (contentWidth > parentWidth) {
+            //     let diff = contentWidth - parentWidth
+            //     let removeFromLeft = this.tribute.menu.offsetWidth - diff
+            //     let newLeft = coordinates.left - removeFromLeft
+
+            //     if (newLeft > 0) {
+            //         coordinates.left = newLeft
+            //     } else {
+            //         coordinates.left = 0
+            //     }
+            // }
+
+            this.tribute.menu.style.cssText = `top: ${coordinates.top}px;
+                                     left: ${coordinates.left}px;
+                                     position: absolute;
+                                     zIndex: 10000;
+                                     display: block;`
+
+            if (scrollTo) this.scrollIntoView()
         } else {
             this.tribute.menu.style.cssText = 'display: none'
         }
@@ -218,7 +244,7 @@ class TributeRange {
             text = ''
 
         if (!this.isContentEditable(context.element)) {
-            let textComponent = this.getDocument().activeElement
+            let textComponent = this.tribute.current.element;
             if (textComponent) {
                 let startPos = textComponent.selectionStart
                 if (textComponent.value && startPos >= 0) {
